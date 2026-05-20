@@ -1,6 +1,6 @@
 # GarimpaAI
 
-Projeto de **web scraping** que coleta ofertas de produtos em marketplaces (atualmente **Amazon** e **Americanas**), aplica filtros de relevância (similaridade + blacklist) e ajuda a comparar preços, com opção de exportar resultados para CSV e fazer uma análise/gráficos em cima desses CSVs.
+Projeto de **web scraping** que coleta ofertas de produtos em marketplaces (atualmente **Amazon** e **Americanas**), aplica **filtragem automática de acessórios** (capas, películas, cabos, carregadores, fones, suportes etc.) para te entregar só o produto que você realmente buscou, compara preços e exporta resultados para CSV — com análise/gráficos por loja.
 
 Este repositório contém:
 
@@ -14,14 +14,23 @@ Este repositório contém:
 - Scraper via Selenium (headless) para:
 	- Amazon (`scrape_amazon_selenium`)
 	- Americanas (`scrape_americanas_selenium`)
+- **Filtragem automática inteligente** (sem refinar blacklist na mão):
+	- Blacklist embutida de acessórios (capa, capinha, película, cabo,
+	  carregador, fone, suporte, tripé, kit reparo, peças de reposição etc.)
+	- Detecção dinâmica de padrões `para X`, `compatível com X`, `p/ X`
+	  no título — pega o caso em que o item é um acessório PARA o produto
+	  buscado e não o produto em si.
+	- Blacklist *consciente da busca*: se você procura "capa iphone",
+	  "capa" deixa de ser filtrado automaticamente.
+	- Similaridade mínima configurável (interseção de palavras).
+	- Blacklist extra opcional via API (`extra_blacklist=[...]`).
 - Normalização/limpeza:
 	- Remoção de acentos via RegEx
 	- Limpeza de título
 	- Conversão de preço para `float`
-	- Similaridade simples por interseção de palavras
-	- Blacklist de palavras para filtrar itens irrelevantes
 - Relatório no terminal:
 	- Estatísticas (min/max/média) e top 10 mais baratos
+	- Contadores brutos vs. relevantes por página
 - Exportação:
 	- Salvar CSV com os resultados
 - Análise pós-coleta:
@@ -102,9 +111,51 @@ O programa vai perguntar:
 - termo de busca
 - número de páginas
 - similaridade mínima
-- (opcional) blacklist extra
 
+A filtragem de acessórios acontece **automaticamente** — você não precisa
+mais ficar adicionando palavras na mão pra filtrar capinhas, películas etc.
 Ao final, você pode salvar em CSV.
+
+### Como funciona a filtragem automática
+
+Para cada produto, três checagens decidem se ele é relevante:
+
+1. **Blacklist embutida de acessórios** (`ACCESSORY_KEYWORDS` em
+   `garimpaai.text_utils`): palavras/frases como `capa`, `película`,
+   `cabo usb`, `carregador`, `fone de ouvido`, `suporte`, `tripé`, `kit
+   reparo`, `tampa traseira` etc. são filtradas — exceto quando aparecem
+   no próprio termo buscado.
+2. **Detecção dinâmica de acessório**: padrões regex como
+   `para iphone`, `compatível com xiaomi`, `p/ samsung` são gerados a
+   partir das palavras significativas da busca e filtram itens
+   descritos como acessório PARA aquele produto.
+3. **Similaridade mínima**: percentual de palavras do termo buscado
+   que precisam aparecer no título.
+
+Exemplos rápidos buscando `iphone`:
+
+| Título encontrado                        | Decisão | Motivo                             |
+|------------------------------------------|---------|------------------------------------|
+| iPhone 13 128GB                          | ✅ mantém | passou em todos os filtros          |
+| Capa de Silicone para iPhone 13          | ❌ drop  | `capa` + padrão `para iphone`       |
+| Película de Vidro Compatível com iPhone  | ❌ drop  | `película` + `compativel com iphone`|
+| Carregador 20W p/ iPhone                 | ❌ drop  | `carregador` + `p/ iphone`          |
+
+Para estender ou customizar, edite as listas em
+[`src/garimpaai/text_utils.py`](src/garimpaai/text_utils.py) ou
+passe `extra_blacklist=[...]` chamando o scraper diretamente:
+
+```python
+from garimpaai.interactive import buscar_produtos_selenium
+df = buscar_produtos_selenium(
+    produto="iphone 13",
+    loja="amazon",
+    paginas=3,
+    similaridade=0.4,
+    extra_blacklist=["recondicionado", "vitrine"],
+    salvar_csv=True,
+)
+```
 
 ### 4) Rodar a análise de CSVs (gráficos)
 
@@ -122,5 +173,6 @@ O notebook original está em `Entrega_final.ipynb` e também pode ser aberto no 
 
 - Tornar o scraper mais resiliente (tratamento de captcha/503, retries, timeouts)
 - Criar CLI com argumentos (sem prompts)
-- Melhorar qualidade da similaridade (ex.: stemming/tokenização)
+- Melhorar qualidade da similaridade (ex.: stemming/tokenização ou embeddings)
+- Expandir a blacklist embutida por categoria (eletrônicos, moda, livros etc.)
 - Expandir lojas e padronizar schemas de resultados

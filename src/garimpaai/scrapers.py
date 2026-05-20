@@ -48,7 +48,6 @@ def scrape_amazon_selenium(produto, max_pages=3, min_similarity=0.3, extra_black
     combined_blacklist = extra_blacklist or []
 
     for page in range(1, max_pages + 1):
-        print(f"· Página {page}...", end=" ")
         html = abre_amazon_para_busca(produto, page)
         soup = BeautifulSoup(html, "html.parser")
 
@@ -65,11 +64,11 @@ def scrape_amazon_selenium(produto, max_pages=3, min_similarity=0.3, extra_black
                 break
 
         if not product_containers:
-            print("sem produtos.")
+            print(f"· Página {page}: sem produtos.")
             time.sleep(random.uniform(2, 5))
             continue
 
-        print(f"{len(product_containers)} encontrados.")
+        relevantes_pagina = 0
         for container in product_containers:
             try:
                 title = None
@@ -168,10 +167,12 @@ def scrape_amazon_selenium(produto, max_pages=3, min_similarity=0.3, extra_black
                             "pagina": page,
                         }
                     )
+                    relevantes_pagina += 1
 
             except Exception:
                 continue
 
+        print(f"· Página {page}: {len(product_containers)} brutos → {relevantes_pagina} relevantes.")
         time.sleep(random.uniform(2, 5))
 
     return resultados
@@ -188,7 +189,6 @@ def scrape_americanas_selenium(produto, max_pages=3, min_similarity=0.3, extra_b
     combined_blacklist = extra_blacklist or []
 
     for page in range(max_pages):
-        print(f"· Página {page}...", end=" ")
         html = abre_americanas_para_busca(produto, page)
         soup = BeautifulSoup(html, "html.parser")
 
@@ -197,11 +197,11 @@ def scrape_americanas_selenium(produto, max_pages=3, min_similarity=0.3, extra_b
         )
 
         if not product_containers:
-            print("sem produtos.")
+            print(f"· Página {page}: sem produtos.")
             time.sleep(random.uniform(2, 5))
             continue
 
-        print(f"{len(product_containers)} encontrados.")
+        relevantes_pagina = 0
         for container in product_containers:
             try:
                 titulo_elem = container.select_one("h3")
@@ -244,10 +244,12 @@ def scrape_americanas_selenium(produto, max_pages=3, min_similarity=0.3, extra_b
                         "pagina": page,
                     }
                 )
+                relevantes_pagina += 1
 
             except Exception:
                 continue
 
+        print(f"· Página {page}: {len(product_containers)} brutos → {relevantes_pagina} relevantes.")
         time.sleep(random.uniform(2, 5))
 
     return resultados
