@@ -5,6 +5,7 @@ __all__ = [
     "reporting",
     "interactive",
     "analysis",
+    "launcher",
 ]
 
 __version__ = "0.1.0"

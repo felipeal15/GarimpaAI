@@ -51,7 +51,9 @@ Módulos:
 - `garimpaai.scrapers`: scraping Amazon/Americanas
 - `garimpaai.reporting`: análise/relatório + salvar CSV
 - `garimpaai.interactive`: fluxo interativo (CLI no terminal)
-- `garimpaai.analysis`: análise de CSVs e geração de gráficos
+- `garimpaai.analysis`: análise de CSVs e geração de gráficos (matplotlib)
+- `garimpaai.app`: frontend web (Streamlit) — buscar + comparar lojas
+- `garimpaai.launcher`: comando `garimpaai-ui` que inicia o frontend
 
 ## Como rodar localmente (Windows)
 
@@ -93,7 +95,22 @@ Opção B: instalar via `requirements.txt`
 pip install -r requirements.txt
 ```
 
-### 3) Rodar o fluxo interativo (scraping)
+### 3) Rodar o frontend web (recomendado)
+
+```powershell
+garimpaai-ui
+```
+
+Abre uma página local no navegador (`http://localhost:8501`) com duas abas:
+
+- **🔍 Buscar produtos**: escolhe loja, termo, páginas e similaridade; mostra
+  estatísticas, gráfico Top 10 e tabela completa com link clicável + botão
+  para baixar CSV.
+- **📊 Comparar lojas**: faz upload de 2+ CSVs gerados na primeira aba (ou
+  pela CLI) e mostra qual loja tem o menor preço médio + gráfico Top 10 por
+  loja.
+
+### 4) Rodar o fluxo interativo no terminal (alternativa)
 
 ```powershell
 garimpaai
@@ -157,13 +174,15 @@ df = buscar_produtos_selenium(
 )
 ```
 
-### 4) Rodar a análise de CSVs (gráficos)
+### 5) Análise de CSVs por script (sem UI)
 
-Você pode chamar a função diretamente no Python:
+Para gerar gráficos matplotlib direto do Python:
 
 ```powershell
 python -c "from garimpaai.analysis import analise_precos_lojas; analise_precos_lojas(['amazon','americanas'], ['amazon_monitor.csv','americanas_monitor.csv'])"
 ```
+
+> Para uso interativo a aba **Comparar lojas** do `garimpaai-ui` é mais conveniente.
 
 ## Notebook do Colab
 

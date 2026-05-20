@@ -16,10 +16,12 @@ dependencies = [
   "requests>=2.31",
   "matplotlib>=3.7",
   "seaborn>=0.13",
+  "streamlit>=1.30",
 ]
 
 [project.scripts]
 garimpaai = "garimpaai.__main__:main"
+garimpaai-ui = "garimpaai.launcher:run"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
